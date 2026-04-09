@@ -1,0 +1,229 @@
+@page "/organizations"
+@attribute [Authorize(Roles = "SuperAdmin")]
+@inject ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Organizations</h1>
+        <p>Manage tenant organizations</p>
+    </div>
+    <button class="btn btn-primary" @onclick="() => OpenModal()">+ New Organization</button>
+</div>
+
+@if (!string.IsNullOrEmpty(_msg))
+{
+    <div class="alert @(_isError ? "alert-danger" : "alert-success")">@_msg</div>
+}
+
+@if (_loading)
+{
+    <div class="loading"><div class="spinner"></div></div>
+}
+else
+{
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Users</th>
+                    <th>Products</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var org in _orgs)
+                {
+                    <tr>
+                        <td style="font-weight:600; color:var(--text-primary);">@org.Name</td>
+                        <td>
+                            <span class="badge @(org.IsActive ? "badge-success" : "badge-danger")">
+                                @(org.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td>@org.UserCount</td>
+                        <td>@org.ProductCount</td>
+                        <td>@org.CreatedAt.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary btn-sm" @onclick="() => OpenModal(org)">Edit</button>
+                                <button class="btn btn-sm @(org.IsActive ? "btn-warning" : "btn-success")"
+                                        @onclick="() => ToggleActive(org)">
+                                    @(org.IsActive ? "Deactivate" : "Activate")
+                                </button>
+                                <button class="btn btn-primary btn-sm" @onclick="() => OpenAdminModal(org)">+ Admin</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (_orgs.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="icon">🏢</div>
+                <h3>No Organizations</h3>
+                <p>Create your first organization to get started.</p>
+            </div>
+        }
+    </div>
+}
+
+@* Organization Modal *@
+@if (_showModal)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>@(_editOrg != null ? "Edit" : "New") Organization</h2>
+                <button class="modal-close" @onclick="CloseModal">×</button>
+            </div>
+
+            <div class="form-group">
+                <label>Organization Name</label>
+                <input class="form-control" @bind="_orgName" placeholder="e.g. ABC Construction Materials" />
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveOrg" disabled="@_saving">
+                    @(_saving ? "Saving..." : "Save")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* Admin Creation Modal *@
+@if (_showAdminModal)
+{
+    <div class="modal-overlay" @onclick="CloseAdminModal">
+        <div class="modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>Create Admin for @_targetOrg?.Name</h2>
+                <button class="modal-close" @onclick="CloseAdminModal">×</button>
+            </div>
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input class="form-control" @bind="_adminName" placeholder="John Doe" />
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input class="form-control" @bind="_adminEmail" type="email" placeholder="admin@company.com" />
+            </div>
+
+            <div class="alert alert-info" style="font-size:13px;">
+                📧 A set-password email will be sent. No password is set here.
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseAdminModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="CreateAdmin" disabled="@_saving">
+                    @(_saving ? "Creating..." : "Create Admin")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<OrganizationDto> _orgs = new();
+    private bool _loading = true, _saving;
+    private bool _showModal, _showAdminModal;
+    private OrganizationDto? _editOrg;
+    private OrganizationDto? _targetOrg;
+    private string _orgName = "", _adminName = "", _adminEmail = "";
+    private string? _msg;
+    private bool _isError;
+
+    protected override async Task OnInitializedAsync() => await LoadOrgs();
+
+    private async Task LoadOrgs()
+    {
+        _loading = true;
+        var r = await Api.GetAsync<List<OrganizationDto>>("api/organizations");
+        _orgs = r?.Data ?? new();
+        _loading = false;
+    }
+
+    private void OpenModal(OrganizationDto? org = null)
+    {
+        _editOrg = org;
+        _orgName = org?.Name ?? "";
+        _showModal = true;
+    }
+
+    private void CloseModal() { _showModal = false; _editOrg = null; }
+
+    private void OpenAdminModal(OrganizationDto org)
+    {
+        _targetOrg = org;
+        _adminName = "";
+        _adminEmail = "";
+        _showAdminModal = true;
+    }
+
+    private void CloseAdminModal() { _showAdminModal = false; _targetOrg = null; }
+
+    private async Task SaveOrg()
+    {
+        if (string.IsNullOrWhiteSpace(_orgName)) return;
+        _saving = true;
+        _msg = null;
+
+        if (_editOrg != null)
+        {
+            var r = await Api.PutAsync<OrganizationDto>($"api/organizations/{_editOrg.Id}",
+                new UpdateOrganizationDto { Name = _orgName, IsActive = _editOrg.IsActive });
+            _msg = r?.Success == true ? "Organization updated." : r?.Message ?? "Failed.";
+            _isError = r?.Success != true;
+        }
+        else
+        {
+            var r = await Api.PostAsync<OrganizationDto>("api/organizations",
+                new CreateOrganizationDto { Name = _orgName });
+            _msg = r?.Success == true ? "Organization created." : r?.Message ?? "Failed.";
+            _isError = r?.Success != true;
+        }
+
+        _saving = false;
+        CloseModal();
+        await LoadOrgs();
+    }
+
+    private async Task ToggleActive(OrganizationDto org)
+    {
+        _msg = null;
+        var r = await Api.PutAsync<OrganizationDto>($"api/organizations/{org.Id}",
+            new UpdateOrganizationDto { Name = org.Name, IsActive = !org.IsActive });
+        _msg = r?.Success == true ? $"Organization {(!org.IsActive ? "activated" : "deactivated")}." : r?.Message;
+        _isError = r?.Success != true;
+        await LoadOrgs();
+    }
+
+    private async Task CreateAdmin()
+    {
+        if (string.IsNullOrWhiteSpace(_adminName) || string.IsNullOrWhiteSpace(_adminEmail) || _targetOrg == null) return;
+        _saving = true;
+        _msg = null;
+
+        var r = await Api.PostAsync<UserDto>("api/users", new CreateUserDto
+        {
+            Name = _adminName,
+            Email = _adminEmail,
+            Role = "Admin",
+            OrganizationId = _targetOrg.Id
+        });
+
+        _msg = r?.Success == true ? "Admin created. Set-password email sent." : r?.Message ?? "Failed.";
+        _isError = r?.Success != true;
+        _saving = false;
+        CloseAdminModal();
+        await LoadOrgs();
+    }
+}

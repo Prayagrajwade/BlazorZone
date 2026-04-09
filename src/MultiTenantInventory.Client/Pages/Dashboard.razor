@@ -1,0 +1,96 @@
+@page "/dashboard"
+@attribute [Authorize(Roles = "Admin")]
+@inject ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Dashboard</h1>
+        <p>Organization overview</p>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="loading"><div class="spinner"></div></div>
+}
+else if (_data != null)
+{
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span class="stat-icon">📦</span>
+            <div class="stat-label">Products</div>
+            <div class="stat-value">@_data.TotalProducts</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">🛒</span>
+            <div class="stat-label">Orders</div>
+            <div class="stat-value">@_data.TotalOrders</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">💰</span>
+            <div class="stat-label">Revenue</div>
+            <div class="stat-value">₹@_data.TotalRevenue.ToString("N0")</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">👥</span>
+            <div class="stat-label">Users</div>
+            <div class="stat-value">@_data.TotalUsers</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">🏷️</span>
+            <div class="stat-label">Categories</div>
+            <div class="stat-value">@_data.TotalCategories</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">⚠️</span>
+            <div class="stat-label">Low Stock</div>
+            <div class="stat-value">@_data.LowStockProducts</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom:16px;">Recent Orders</h3>
+        <table class="data-table">
+            <thead>
+                <tr><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var o in _data.RecentOrders)
+                {
+                    <tr>
+                        <td style="font-weight:600; color:var(--text-primary);">@o.UserName</td>
+                        <td>₹@o.TotalAmount.ToString("N2")</td>
+                        <td><span class="badge @GetStatusBadge(o.Status)">@o.Status</span></td>
+                        <td>@o.CreatedAt.ToString("MMM dd, HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (_data.RecentOrders.Count == 0)
+        {
+            <div class="empty-state"><div class="icon">📋</div><h3>No orders yet</h3></div>
+        }
+    </div>
+}
+
+@code {
+    private DashboardDto? _data;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var r = await Api.GetAsync<DashboardDto>("api/dashboard");
+        _data = r?.Data;
+        _loading = false;
+    }
+
+    private string GetStatusBadge(string status) => status switch
+    {
+        "Pending" => "badge-warning",
+        "Confirmed" or "Processing" => "badge-info",
+        "Shipped" => "badge-primary",
+        "Delivered" => "badge-success",
+        "Cancelled" => "badge-danger",
+        _ => "badge-info"
+    };
+}

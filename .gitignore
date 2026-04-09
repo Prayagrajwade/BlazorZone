@@ -1,0 +1,100 @@
+# =========================
+
+# .NET / C# / ASP.NET Core
+
+# =========================
+
+bin/
+obj/
+out/
+*.dll
+*.exe
+*.pdb
+
+# User-specific files
+
+*.user
+*.userosscache
+*.suo
+*.csproj.user
+
+# Visual Studio
+
+.vs/
+.vscode/
+*.sln.docstates
+
+# Rider
+
+.idea/
+
+# Logs
+
+*.log
+
+# OS files
+
+.DS_Store
+Thumbs.db
+
+# =========================
+
+# NuGet
+
+# =========================
+
+*.nupkg
+.nuget/
+packages/
+
+# =========================
+
+# Environment files
+
+# =========================
+
+appsettings.Development.json
+appsettings.Local.json
+.env
+
+# =========================
+
+# EF Core
+
+# =========================
+
+Migrations/*.Designer.cs
+Migrations/*Snapshot.cs
+
+# =========================
+
+# Angular / Frontend
+
+# =========================
+
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Angular env files
+
+src/environments/environment.prod.ts
+
+# =========================
+
+# Blazor / WASM
+
+# =========================
+
+wwwroot/_framework/
+
+# =========================
+
+# Misc
+
+# =========================
+
+*.cache
+*.tmp
+*.temp

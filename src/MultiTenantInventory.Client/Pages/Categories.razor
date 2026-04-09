@@ -1,0 +1,118 @@
+@page "/categories"
+@attribute [Authorize(Roles = "Admin")]
+@inject ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Categories</h1>
+        <p>Manage product categories</p>
+    </div>
+    <button class="btn btn-primary" @onclick="() => OpenModal()">+ New Category</button>
+</div>
+
+@if (!string.IsNullOrEmpty(_msg))
+{
+    <div class="alert @(_isError ? "alert-danger" : "alert-success")">@_msg</div>
+}
+
+@if (_loading)
+{
+    <div class="loading"><div class="spinner"></div></div>
+}
+else
+{
+    <div class="card">
+        <table class="data-table">
+            <thead><tr><th>Name</th><th>Products</th><th>Actions</th></tr></thead>
+            <tbody>
+                @foreach (var c in _categories)
+                {
+                    <tr>
+                        <td style="font-weight:600; color:var(--text-primary);">@c.Name</td>
+                        <td>@c.ProductCount</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary btn-sm" @onclick="() => OpenModal(c)">Edit</button>
+                                <button class="btn btn-danger btn-sm" @onclick="() => Delete(c.Id)">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (_categories.Count == 0)
+        {
+            <div class="empty-state"><div class="icon">🏷️</div><h3>No categories</h3><p>Create your first category.</p></div>
+        }
+    </div>
+}
+
+@if (_showModal)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>@(_editCat != null ? "Edit" : "New") Category</h2>
+                <button class="modal-close" @onclick="CloseModal">×</button>
+            </div>
+            <div class="form-group">
+                <label>Name</label>
+                <input class="form-control" @bind="_name" placeholder="Category name" />
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="Save" disabled="@_saving">@(_saving ? "Saving..." : "Save")</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CategoryDto> _categories = new();
+    private bool _loading = true, _saving, _showModal;
+    private CategoryDto? _editCat;
+    private string _name = "";
+    private string? _msg;
+    private bool _isError;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _loading = true;
+        var r = await Api.GetAsync<List<CategoryDto>>("api/categories");
+        _categories = r?.Data ?? new();
+        _loading = false;
+    }
+
+    private void OpenModal(CategoryDto? c = null) { _editCat = c; _name = c?.Name ?? ""; _showModal = true; }
+    private void CloseModal() { _showModal = false; _editCat = null; }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_name)) return;
+        _saving = true; _msg = null;
+        if (_editCat != null)
+        {
+            var r = await Api.PutAsync<CategoryDto>($"api/categories/{_editCat.Id}", new CreateCategoryDto { Name = _name });
+            _msg = r?.Success == true ? "Category updated." : r?.Message;
+            _isError = r?.Success != true;
+        }
+        else
+        {
+            var r = await Api.PostAsync<CategoryDto>("api/categories", new CreateCategoryDto { Name = _name });
+            _msg = r?.Success == true ? "Category created." : r?.Message;
+            _isError = r?.Success != true;
+        }
+        _saving = false; CloseModal(); await Load();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        _msg = null;
+        var r = await Api.DeleteAsync<bool>($"api/categories/{id}");
+        _msg = r?.Success == true ? "Category deleted." : r?.Message;
+        _isError = r?.Success != true;
+        await Load();
+    }
+}

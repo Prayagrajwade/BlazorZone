@@ -1,0 +1,47 @@
+@page "/sa-dashboard"
+@attribute [Authorize(Roles = "SuperAdmin")]
+@inject ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Platform Dashboard</h1>
+        <p>System-wide overview</p>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="loading"><div class="spinner"></div></div>
+}
+else if (_data != null)
+{
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span class="stat-icon">🏢</span>
+            <div class="stat-label">Total Organizations</div>
+            <div class="stat-value">@_data.TotalOrganizations</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">✅</span>
+            <div class="stat-label">Active Organizations</div>
+            <div class="stat-value">@_data.ActiveOrganizations</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">👥</span>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">@_data.TotalUsers</div>
+        </div>
+    </div>
+}
+
+@code {
+    private SaDashboardDto? _data;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await Api.GetAsync<SaDashboardDto>("api/dashboard/sa");
+        _data = response?.Data;
+        _loading = false;
+    }
+}

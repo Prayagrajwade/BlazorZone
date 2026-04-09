@@ -1,0 +1,12 @@
+﻿global using System.Text;
+global using Microsoft.AspNetCore.Authentication.JwtBearer;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.IdentityModel.Tokens;
+global using Microsoft.OpenApi.Models;
+global using MultiTenantInventory.Application.DTOs;
+global using MultiTenantInventory.Application.Interfaces.Services;
+global using MultiTenantInventory.Application.Interfaces.Repositories;
+global using MultiTenantInventory.Infrastructure.Data;
+global using MultiTenantInventory.Infrastructure.Repositories;
+global using MultiTenantInventory.Infrastructure.Services;
+global using Microsoft.AspNetCore.Mvc;

@@ -1,0 +1,125 @@
+@page "/manage-users"
+@attribute [Authorize(Roles = "Admin")]
+@inject ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Users</h1>
+        <p>Manage organization users</p>
+    </div>
+    <button class="btn btn-primary" @onclick="() => _showModal = true">+ New User</button>
+</div>
+
+@if (!string.IsNullOrEmpty(_msg))
+{
+    <div class="alert @(_isError ? "alert-danger" : "alert-success")">@_msg</div>
+}
+
+@if (_loading)
+{
+    <div class="loading"><div class="spinner"></div></div>
+}
+else
+{
+    <div class="card">
+        <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                @foreach (var u in _users)
+                {
+                    <tr>
+                        <td style="font-weight:600; color:var(--text-primary);">@u.Name</td>
+                        <td>@u.Email</td>
+                        <td><span class="badge badge-primary">@u.Role</span></td>
+                        <td><span class="badge @(u.IsActive ? "badge-success" : "badge-danger")">@(u.IsActive ? "Active" : "Inactive")</span></td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm @(u.IsActive ? "btn-warning" : "btn-success")"
+                                        @onclick="() => Toggle(u.Id)">@(u.IsActive ? "Deactivate" : "Activate")</button>
+                                <button class="btn btn-danger btn-sm" @onclick="() => Delete(u.Id)">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (_users.Count == 0)
+        {
+            <div class="empty-state"><div class="icon">👥</div><h3>No users</h3></div>
+        }
+    </div>
+}
+
+@if (_showModal)
+{
+    <div class="modal-overlay" @onclick="() => _showModal = false">
+        <div class="modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>Create User</h2>
+                <button class="modal-close" @onclick="() => _showModal = false">×</button>
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input class="form-control" @bind="_name" placeholder="John Doe" />
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input class="form-control" @bind="_email" type="email" placeholder="user@company.com" />
+            </div>
+            <div class="alert alert-info" style="font-size:13px;">
+                📧 A set-password email will be sent to the user. They must set their password before they can log in.
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="() => _showModal = false">Cancel</button>
+                <button class="btn btn-primary" @onclick="Create" disabled="@_saving">@(_saving ? "Creating..." : "Create User")</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UserDto> _users = new();
+    private bool _loading = true, _saving, _showModal;
+    private string _name = "", _email = "";
+    private string? _msg;
+    private bool _isError;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _loading = true;
+        var r = await Api.GetAsync<List<UserDto>>("api/users");
+        _users = r?.Data ?? new();
+        _loading = false;
+    }
+
+    private async Task Create()
+    {
+        if (string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_email)) return;
+        _saving = true; _msg = null;
+        var r = await Api.PostAsync<UserDto>("api/users", new CreateUserDto { Name = _name, Email = _email, Role = "User" });
+        _msg = r?.Success == true ? "User created. Set-password email sent." : r?.Message;
+        _isError = r?.Success != true;
+        _saving = false; _showModal = false;
+        _name = ""; _email = "";
+        await Load();
+    }
+
+    private async Task Toggle(Guid id)
+    {
+        _msg = null;
+        var r = await Api.PutAsync<bool>($"api/users/{id}/toggle-active", new { });
+        _msg = r?.Message; _isError = r?.Success != true;
+        await Load();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        _msg = null;
+        var r = await Api.DeleteAsync<bool>($"api/users/{id}");
+        _msg = r?.Success == true ? "User deleted." : r?.Message;
+        _isError = r?.Success != true;
+        await Load();
+    }
+}

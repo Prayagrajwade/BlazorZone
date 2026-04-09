@@ -1,0 +1,121 @@
+@page "/shop"
+@attribute [Authorize(Roles = "User,Admin")]
+@inject ApiClient Api
+@inject CartService Cart
+
+<div class="page-header">
+    <div>
+        <h1>Shop</h1>
+        <p>Browse construction materials</p>
+    </div>
+    <div class="search-bar">
+        <input @bind="_search" @bind:event="oninput" placeholder="Search products..." />
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="loading"><div class="spinner"></div></div>
+}
+else
+{
+    <div class="product-grid">
+        @foreach (var p in FilteredProducts)
+        {
+            <div class="product-card">
+                <div class="product-card-image">📦</div>
+                <div class="product-card-body">
+                    <span class="category-badge">@p.CategoryName</span>
+                    <h3>@p.Name</h3>
+                    <div class="price">₹@p.Price.ToString("N2")</div>
+                    <div class="stock">@p.StockQuantity in stock</div>
+                    <p style="font-size:13px; color:var(--text-muted);">@p.Description</p>
+                </div>
+                <div class="product-card-footer">
+                    <button class="btn btn-primary btn-sm" @onclick="() => AddToCart(p)"
+                            disabled="@(p.StockQuantity == 0)">
+                        @(p.StockQuantity == 0 ? "Out of Stock" : "Add to Cart")
+                    </button>
+                    <button class="btn btn-secondary btn-sm" @onclick="() => ToggleCompare(p)">
+                        @(_compareList.Contains(p) ? "✓ Comparing" : "Compare")
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (FilteredProducts.Count == 0)
+    {
+        <div class="empty-state"><div class="icon">🔍</div><h3>No products found</h3></div>
+    }
+
+    @if (_compareList.Count >= 2)
+    {
+        <div class="card" style="margin-top:28px;">
+            <h3 style="margin-bottom:16px;">Compare Products (@_compareList.Count)</h3>
+            <table class="data-table">
+                <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var p in _compareList)
+                    {
+                        <tr>
+                            <td style="font-weight:600; color:var(--text-primary);">@p.Name</td>
+                            <td>@p.CategoryName</td>
+                            <td style="font-weight:700; color:var(--accent-primary);">₹@p.Price.ToString("N2")</td>
+                            <td>@p.StockQuantity</td>
+                            <td><button class="btn btn-danger btn-sm" @onclick="() => _compareList.Remove(p)">Remove</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <button class="btn btn-secondary btn-sm" style="margin-top:12px;" @onclick="() => _compareList.Clear()">Clear Compare</button>
+        </div>
+    }
+}
+
+@if (_addedMsg != null)
+{
+    <div style="position:fixed;bottom:24px;right:24px;z-index:999;">
+        <div class="alert alert-success" style="margin:0;">✅ @_addedMsg</div>
+    </div>
+}
+
+@code {
+    private List<ProductDto> _products = new();
+    private List<ProductDto> _compareList = new();
+    private bool _loading = true;
+    private string _search = "";
+    private string? _addedMsg;
+
+    private List<ProductDto> FilteredProducts => string.IsNullOrWhiteSpace(_search)
+        ? _products
+        : _products.Where(p =>
+            p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+            p.CategoryName.Contains(_search, StringComparison.OrdinalIgnoreCase)
+          ).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var r = await Api.GetAsync<List<ProductDto>>("api/products");
+        _products = r?.Data ?? new();
+        _loading = false;
+    }
+
+    private async Task AddToCart(ProductDto p)
+    {
+        Cart.AddItem(p);
+        _addedMsg = $"{p.Name} added to cart!";
+        StateHasChanged();
+        await Task.Delay(2000);
+        _addedMsg = null;
+        StateHasChanged();
+    }
+
+    private void ToggleCompare(ProductDto p)
+    {
+        if (_compareList.Contains(p))
+            _compareList.Remove(p);
+        else if (_compareList.Count < 4)
+            _compareList.Add(p);
+    }
+}

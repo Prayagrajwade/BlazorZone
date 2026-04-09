@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MultiTenantInventory.Application/MultiTenantInventory.Application.csproj" />
+    <Project Path="src/MultiTenantInventory.Client/MultiTenantInventory.Client.csproj" />
+    <Project Path="src/MultiTenantInventory.Domain/MultiTenantInventory.Domain.csproj" />
+    <Project Path="src/MultiTenantInventory.Infrastructure/MultiTenantInventory.Infrastructure.csproj" />
+    <Project Path="src/MultiTenantInventory.Server/MultiTenantInventory.Server.csproj" />
+  </Folder>
+</Solution>

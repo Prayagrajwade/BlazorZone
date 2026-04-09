@@ -1,0 +1,106 @@
+@page "/login"
+@page "/"
+@inject ApiClient Api
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+@layout MainLayout
+
+<div class="login-container">
+    <div class="login-card">
+        <h1>MTInventory</h1>
+        <p class="subtitle">Multi-Tenant Inventory Management</p>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="alert alert-danger">⚠️ @_error</div>
+        }
+
+        @if (!string.IsNullOrEmpty(_success))
+        {
+            <div class="alert alert-success">✅ @_success</div>
+        }
+
+        <EditForm Model="_login" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label>Email</label>
+                <InputText @bind-Value="_login.Email" class="form-control" placeholder="you@company.com" id="loginEmail" />
+                <ValidationMessage For="() => _login.Email" class="validation-message" />
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <InputText @bind-Value="_login.Password" type="password" class="form-control" placeholder="••••••••" id="loginPassword" />
+                <ValidationMessage For="() => _login.Password" class="validation-message" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;" disabled="@_loading" id="loginSubmit">
+                @if (_loading) { <span class="spinner" style="width:18px;height:18px;border-width:2px;"></span> }
+                else { <span>Sign In</span> }
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private LoginDto _login = new();
+    private string? _error;
+    private string? _success;
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true && AuthState.CurrentUser != null)
+        {
+            RedirectByRole(AuthState.CurrentUser.Role);
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        _error = null;
+        _loading = true;
+
+        try
+        {
+            var response = await Api.PostAsync<AuthResponseDto>("api/auth/login", _login);
+
+            if (response == null || !response.Success)
+            {
+                _error = response?.Message ?? "Login failed.";
+                return;
+            }
+
+            var auth = response.Data!;
+            if (!auth.Success)
+            {
+                _error = auth.Message;
+                return;
+            }
+
+            await AuthState.LoginAsync(auth.Token, auth.User!);
+            RedirectByRole(auth.User!.Role);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void RedirectByRole(string role)
+    {
+        var url = role switch
+        {
+            "SuperAdmin" => "/sa-dashboard",
+            "Admin" => "/dashboard",
+            _ => "/shop"
+        };
+        Navigation.NavigateTo(url);
+    }
+}

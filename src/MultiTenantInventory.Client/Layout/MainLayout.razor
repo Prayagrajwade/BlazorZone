@@ -1,0 +1,63 @@
+@inherits LayoutComponentBase
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+
+<div class="app-layout">
+    @if (AuthState.CurrentUser != null)
+    {
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon"></div>
+                <span class="brand-text">MTInventory</span>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar">@AuthState.CurrentUser.Name[..1]</div>
+                <div class="user-info">
+                    <span class="user-name">@AuthState.CurrentUser.Name</span>
+                    <span class="user-role">@AuthState.CurrentUser.Role</span>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                @if (AuthState.CurrentUser.Role == "SuperAdmin")
+                {
+                    <li><NavLink href="/sa-dashboard" Match="NavLinkMatch.All"><span class="nav-icon">📊</span> Dashboard</NavLink></li>
+                    <li><NavLink href="/organizations"><span class="nav-icon">🏢</span> Organizations</NavLink></li>
+                }
+                else if (AuthState.CurrentUser.Role == "Admin")
+                {
+                    <li><NavLink href="/dashboard" Match="NavLinkMatch.All"><span class="nav-icon">📊</span> Dashboard</NavLink></li>
+                    <li><NavLink href="/products"><span class="nav-icon">📦</span> Products</NavLink></li>
+                    <li><NavLink href="/categories"><span class="nav-icon">🏷️</span> Categories</NavLink></li>
+                    <li><NavLink href="/orders"><span class="nav-icon">🛒</span> Orders</NavLink></li>
+                    <li><NavLink href="/manage-users"><span class="nav-icon">👥</span> Users</NavLink></li>
+                }
+                else
+                {
+                    <li><NavLink href="/shop" Match="NavLinkMatch.All"><span class="nav-icon">🛍️</span> Shop</NavLink></li>
+                    <li><NavLink href="/cart"><span class="nav-icon">🛒</span> Cart</NavLink></li>
+                    <li><NavLink href="/my-orders"><span class="nav-icon">📋</span> My Orders</NavLink></li>
+                }
+            </ul>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout" @onclick="Logout">
+                    <span class="nav-icon">🚪</span> Logout
+                </button>
+            </div>
+        </nav>
+    }
+
+    <main class="main-content @(AuthState.CurrentUser == null ? "full-width" : "")">
+        @Body
+    </main>
+</div>
+
+@code {
+    private async Task Logout()
+    {
+        await AuthState.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}

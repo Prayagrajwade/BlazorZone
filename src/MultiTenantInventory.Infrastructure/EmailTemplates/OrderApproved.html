@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Order Approved – Invoice</title>
+  <style>
+    body { margin:0; padding:0; background:#f4f6fb; font-family:'Segoe UI',Arial,sans-serif; }
+    .wrapper { max-width:640px; margin:40px auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+    .header { background:linear-gradient(135deg,#6C63FF,#3B82F6); padding:40px 32px; text-align:center; }
+    .header h1 { margin:0; color:#fff; font-size:26px; font-weight:700; }
+    .header p { margin:8px 0 0; color:rgba(255,255,255,0.85); font-size:14px; }
+    .invoice-header { padding:32px 32px 0; display:flex; justify-content:space-between; }
+    .invoice-title { font-size:22px; font-weight:700; color:#111827; }
+    .invoice-meta { color:#6B7280; font-size:13px; text-align:right; }
+    .invoice-meta p { margin:2px 0; }
+    .divider { height:1px; background:#E5E7EB; margin:20px 32px; }
+    .section { padding:0 32px; }
+    .section h3 { font-size:13px; font-weight:600; color:#6B7280; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 12px; }
+    table.items { width:100%; border-collapse:collapse; }
+    table.items th { background:#F9FAFB; padding:10px 12px; font-size:12px; color:#6B7280; font-weight:600; text-align:left; text-transform:uppercase; }
+    table.items td { padding:12px; font-size:14px; color:#374151; border-bottom:1px solid #F3F4F6; }
+    table.items tr:last-child td { border-bottom:none; }
+    .total-row { background:#F9FAFB; border-radius:8px; padding:16px 20px; margin:20px 32px; display:flex; justify-content:space-between; align-items:center; }
+    .total-label { font-size:15px; color:#374151; font-weight:600; }
+    .total-amount { font-size:22px; font-weight:700; color:#6C63FF; }
+    .badge { display:inline-block; background:#D1FAE5; color:#065F46; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+    .body-text { padding:24px 32px; }
+    .body-text p { color:#374151; font-size:15px; line-height:1.7; margin:0 0 12px; }
+    .footer { background:#F9FAFB; padding:20px 32px; text-align:center; color:#9CA3AF; font-size:12px; border-top:1px solid #E5E7EB; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🎉 Order Approved!</h1>
+      <p>Your order has been approved and is being processed</p>
+    </div>
+
+    <!-- Invoice Header -->
+    <div style="padding:32px 32px 0; display:flex; justify-content:space-between;">
+      <div>
+        <div style="font-size:22px; font-weight:700; color:#111827;">INVOICE</div>
+        <div style="margin-top:4px;"><span class="badge">APPROVED</span></div>
+      </div>
+      <div style="color:#6B7280; font-size:13px; text-align:right;">
+        <p style="margin:2px 0;"><strong>Order #:</strong> {{OrderId}}</p>
+        <p style="margin:2px 0;"><strong>Date:</strong> {{OrderDate}}</p>
+        <p style="margin:2px 0;"><strong>Organization:</strong> {{OrganizationName}}</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Billed To -->
+    <div class="section">
+      <h3>Billed To</h3>
+      <p style="margin:0; font-size:14px; color:#374151;"><strong>{{CustomerName}}</strong></p>
+      <p style="margin:2px 0; font-size:14px; color:#6B7280;">{{CustomerEmail}}</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Items Table -->
+    <div class="section">
+      <h3>Order Items</h3>
+      <table class="items">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th style="text-align:center;">Qty</th>
+            <th style="text-align:right;">Unit Price</th>
+            <th style="text-align:right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{OrderItems}}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Total -->
+    <div class="total-row">
+      <div class="total-label">Total Amount</div>
+      <div class="total-amount">{{Currency}}{{TotalAmount}}</div>
+    </div>
+
+    <div class="body-text">
+      <p>Hi <strong>{{CustomerName}}</strong>, your order has been approved by the administrator. Your items are now being processed.</p>
+      <p>Thank you for your purchase from <strong>{{OrganizationName}}</strong>!</p>
+    </div>
+
+    <div class="footer">
+      &copy; {{Year}} MultiTenant Inventory &bull; This is an automated message, please do not reply.
+    </div>
+  </div>
+</body>
+</html>

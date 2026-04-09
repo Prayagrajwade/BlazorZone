@@ -1,0 +1,109 @@
+@page "/cart"
+@attribute [Authorize(Roles = "User,Admin")]
+@inject CartService CartService
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<div class="page-header">
+    <div>
+        <h1>Shopping Cart</h1>
+        <p>@CartService.Count item(s) in your cart</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_msg))
+{
+    <div class="alert @(_isError ? "alert-danger" : "alert-success")">@_msg</div>
+}
+
+@if (CartService.Items.Count == 0)
+{
+    <div class="empty-state">
+        <div class="icon">🛒</div>
+        <h3>Your cart is empty</h3>
+        <p>Browse the shop to add products</p>
+        <button class="btn btn-primary" style="margin-top:16px;" @onclick='() => Navigation.NavigateTo("/shop")'>
+            Go to Shop
+        </button>
+    </div>
+}
+else
+{
+    <div class="card">
+        @foreach (var item in CartService.Items)
+        {
+            <div class="cart-item">
+                <div style="font-size:32px;">📦</div>
+                <div class="cart-item-info">
+                    <h4>@item.ProductName</h4>
+                    <span class="price">₹@item.Price.ToString("N2")</span>
+                </div>
+                <div class="cart-item-qty">
+                    <button @onclick="() => CartService.UpdateQuantity(item.ProductId, item.Quantity - 1)">−</button>
+                    <span style="font-weight:700; min-width:24px; text-align:center;">@item.Quantity</span>
+                    <button @onclick="() => CartService.UpdateQuantity(item.ProductId, item.Quantity + 1)">+</button>
+                </div>
+                <div style="font-weight:700; min-width:100px; text-align:right;">
+                    ₹@((item.Price * item.Quantity).ToString("N2"))
+                </div>
+                <button class="btn btn-danger btn-icon btn-sm" @onclick="() => CartService.RemoveItem(item.ProductId)">🗑</button>
+            </div>
+        }
+    </div>
+
+    <div class="cart-summary">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <div style="font-size:14px; color:var(--text-muted);">Total Amount</div>
+                <div class="total">₹@CartService.Total.ToString("N2")</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" @onclick="() => CartService.Clear()">Clear Cart</button>
+                <button class="btn btn-primary" @onclick="PlaceOrder" disabled="@_placing">
+                    @(_placing ? "Placing..." : "Place Order")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _placing;
+    private string? _msg;
+    private bool _isError;
+
+    protected override void OnInitialized()
+    {
+        CartService.OnChange += StateHasChanged;
+    }
+
+    private async Task PlaceOrder()
+    {
+        _placing = true; _msg = null;
+
+        var order = new CreateOrderDto
+        {
+            Items = CartService.Items.Select(i => new CartItemDto
+            {
+                ProductId = i.ProductId,
+                ProductName = i.ProductName,
+                Price = i.Price,
+                Quantity = i.Quantity
+            }).ToList()
+        };
+
+        var r = await Api.PostAsync<OrderDto>("api/orders", order);
+        if (r?.Success == true)
+        {
+            CartService.Clear();
+            _msg = "Order placed successfully!";
+            _isError = false;
+        }
+        else
+        {
+            _msg = r?.Message ?? "Failed to place order.";
+            _isError = true;
+        }
+        _placing = false;
+    }
+}
