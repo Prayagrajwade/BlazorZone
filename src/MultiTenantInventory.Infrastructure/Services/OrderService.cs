@@ -33,10 +33,6 @@ public class OrderService(
         return MapToDto(order);
     }
 
-    /// <summary>
-    /// Places an order. Stock is NOT deducted here.
-    /// Stock is only deducted when the Admin approves the order.
-    /// </summary>
     public async Task<OrderDto> CreateAsync(CreateOrderDto dto)
     {
         if (dto.Items == null || dto.Items.Count == 0)
@@ -59,7 +55,6 @@ public class OrderService(
             if (product.OrganizationId != _tenant.OrganizationId)
                 throw new UnauthorizedAccessException("Access denied.");
 
-            // Validate enough stock exists but DO NOT deduct yet
             if (product.StockQuantity < item.Quantity)
                 throw new InvalidOperationException($"Insufficient stock for '{product.Name}'. Available: {product.StockQuantity}.");
 

@@ -2,9 +2,6 @@ using System.Linq.Expressions;
 
 namespace MultiTenantInventory.Application.Interfaces.Repositories;
 
-/// <summary>
-/// Generic repository interface for basic CRUD operations.
-/// </summary>
 public interface IRepository<T> where T : class
 {
     Task<T?> GetByIdAsync(Guid id);

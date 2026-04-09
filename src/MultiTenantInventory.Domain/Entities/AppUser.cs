@@ -20,13 +20,9 @@ public class AppUser : TenantEntity
 
     public bool IsActive { get; set; } = true;
 
-    /// <summary>
-    /// Token for email-based password setup flow.
-    /// </summary>
     public string? SetPasswordToken { get; set; }
 
     public DateTime? SetPasswordTokenExpiry { get; set; }
 
-    // Navigation
     public ICollection<Order> Orders { get; set; } = new List<Order>();
 }
