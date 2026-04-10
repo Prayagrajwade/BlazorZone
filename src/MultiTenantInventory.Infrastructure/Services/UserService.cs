@@ -14,6 +14,10 @@ public class UserService(
     public async Task<List<UserDto>> GetAllAsync()
     {
         var users = await userRepo.GetAllAsync();
+        
+        // Exclude Admins and SuperAdmins from the list so they cannot modify themselves or SAs
+        users = users.Where(u => u.Role == UserRole.User).ToList();
+
         return users.Select(MapToDto).ToList();
     }
 

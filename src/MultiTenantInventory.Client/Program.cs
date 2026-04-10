@@ -9,19 +9,19 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// HTTP client pointing to server API
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? builder.HostEnvironment.BaseAddress;
+
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+    BaseAddress = new Uri(apiBaseUrl)
 });
 
-// Auth
+
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<AuthStateService>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthStateService>());
 builder.Services.AddAuthorizationCore();
 
-// Services
 builder.Services.AddScoped<ApiClient>();
 builder.Services.AddSingleton<CartService>();
 

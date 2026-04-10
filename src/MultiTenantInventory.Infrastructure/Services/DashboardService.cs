@@ -19,8 +19,8 @@ public class DashboardService(
         {
             TotalProducts = products.Count,
             TotalOrders = orders.Count,
-            TotalRevenue = orders.Sum(o => o.TotalAmount),
-            TotalUsers = users.Count,
+            TotalRevenue = orders.Where(o => o.Status == Domain.Enums.OrderStatus.Approved).Sum(o => o.TotalAmount),
+            TotalUsers = users.Count(u => u.Role == Domain.Enums.UserRole.User),
             TotalCategories = categories.Count,
             LowStockProducts = products.Count(p => p.StockQuantity < 10),
             RecentOrders = recentOrders.Select(o => new RecentOrderDto
@@ -37,13 +37,15 @@ public class DashboardService(
     public async Task<SaDashboardDto> GetSaDashboardAsync()
     {
         var orgs = await orgRepo.GetAllWithStatsAsync();
-        var allUsers = orgs.SelectMany(o => o.Users).Where(u => !u.IsDeleted).ToList();
+        var allUsers = orgs.SelectMany(o => o.Users)
+            .Where(u => !u.IsDeleted && u.Role == Domain.Enums.UserRole.User)
+            .ToList();
 
         return new SaDashboardDto
         {
             TotalOrganizations = orgs.Count,
             ActiveOrganizations = orgs.Count(o => o.IsActive),
-            TotalUsers = allUsers.Count
+            TotalUsers = allUsers.Count(u => u.Role == Domain.Enums.UserRole.User)
         };
     }
 }

@@ -13,7 +13,7 @@ public class OrganizationService(IOrganizationRepository repo, ITenantService te
             Name = o.Name,
             IsActive = o.IsActive,
             CreatedAt = o.CreatedAt,
-            UserCount = o.Users.Count(u => !u.IsDeleted),
+            UserCount = o.Users.Count(u => !u.IsDeleted && u.Role == Domain.Enums.UserRole.User),
             ProductCount = o.Products.Count(p => !p.IsDeleted)
         }).ToList();
     }
@@ -29,7 +29,7 @@ public class OrganizationService(IOrganizationRepository repo, ITenantService te
             Name = o.Name,
             IsActive = o.IsActive,
             CreatedAt = o.CreatedAt,
-            UserCount = o.Users.Count(u => !u.IsDeleted),
+            UserCount = o.Users.Count(u => !u.IsDeleted && u.Role == Domain.Enums.UserRole.User),
             ProductCount = o.Products.Count(p => !p.IsDeleted)
         };
     }
@@ -46,7 +46,7 @@ public class OrganizationService(IOrganizationRepository repo, ITenantService te
         await repo.AddAsync(org);
         await repo.SaveChangesAsync();
 
-        logger.LogInformation("Organization '{Name}' created by SA {UserId}", dto.Name, _tenant.UserId);
+        logger.LogInformation("Organization '{Name}' created by SA {UserId}", dto.Name, tenant.UserId);
 
         return new OrganizationDto
         {
@@ -70,7 +70,7 @@ public class OrganizationService(IOrganizationRepository repo, ITenantService te
         repo.Update(org);
         await repo.SaveChangesAsync();
 
-        logger.LogInformation("Organization '{Name}' updated by SA {UserId}", dto.Name, _tenant.UserId);
+        logger.LogInformation("Organization '{Name}' updated by SA {UserId}", dto.Name, tenant.UserId);
 
         return new OrganizationDto
         {

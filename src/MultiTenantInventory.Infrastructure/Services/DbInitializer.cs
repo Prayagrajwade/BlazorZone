@@ -22,14 +22,14 @@ public class DbInitializer(
 
     private async Task SeedSuperAdminAsync()
     {
-        var saExists = await userRepo.AnyAsync(u => u.Role == UserRole.SuperAdmin);
+        var saExists = await userRepo.EmailExistsAsync("sa@system.com");
         if (saExists)
         {
-            logger.LogInformation("[Seeder] Super Admin already exists. Skipping.");
+            logger.LogInformation("Seeder Super Admin already exists. Skipping.");
             return;
         }
 
-        logger.LogInformation("[Seeder] Seeding Super Admin...");
+        logger.LogInformation("Seeder Seeding Super Admin...");
 
         var systemOrg = new Organization
         {

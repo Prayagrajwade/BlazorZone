@@ -6,14 +6,14 @@ public class AuthController(IAuthService authService) : ControllerBase
 {
 
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginDto dto)
+    public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Login([FromBody] LoginDto dto)
     {
         try
         {
             var result = await authService.LoginAsync(dto);
             if (!result.Success)
-                return Unauthorized(result);
-            return Ok(result);
+                return Unauthorized(ApiResponse<AuthResponseDto>.Fail(result.Message));
+            return Ok(ApiResponse<AuthResponseDto>.Ok(result));
         }
         catch (InvalidOperationException ex)
         {
@@ -22,14 +22,14 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpPost("set-password")]
-    public async Task<ActionResult<AuthResponseDto>> SetPassword([FromBody] SetPasswordDto dto)
+    public async Task<ActionResult<ApiResponse<AuthResponseDto>>> SetPassword([FromBody] SetPasswordDto dto)
     {
         try
         {
             var result = await authService.SetPasswordAsync(dto);
             if (!result.Success)
-                return BadRequest(result);
-            return Ok(result);
+                return BadRequest(ApiResponse<AuthResponseDto>.Fail(result.Message));
+            return Ok(ApiResponse<AuthResponseDto>.Ok(result));
         }
         catch (InvalidOperationException ex)
         {

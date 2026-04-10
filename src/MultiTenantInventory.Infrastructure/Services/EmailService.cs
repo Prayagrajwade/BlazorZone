@@ -123,7 +123,7 @@ public class EmailService(
     {
         if (string.IsNullOrWhiteSpace(_smtp.Host) || string.IsNullOrWhiteSpace(_smtp.Username))
         {
-            logger.LogWarning("[Email] SMTP not configured. Skipping email to {To}: {Subject}", toEmail, subject);
+            logger.LogWarning("Email SMTP not configured. Skipping email to {To}: {Subject}", toEmail, subject);
             return;
         }
 

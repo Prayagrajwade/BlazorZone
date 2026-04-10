@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace MultiTenantInventory.Infrastructure.Repositories;
 
 public class Repository<T>(AppDbContext db) : IRepository<T> where T : class
@@ -12,18 +10,6 @@ public class Repository<T>(AppDbContext db) : IRepository<T> where T : class
 
     public async Task<List<T>> GetAllAsync()
         => await _dbSet.ToListAsync();
-
-    public async Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate)
-        => await _dbSet.Where(predicate).ToListAsync();
-
-    public async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
-        => await _dbSet.FirstOrDefaultAsync(predicate);
-
-    public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
-        => await _dbSet.AnyAsync(predicate);
-
-    public async Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null)
-        => predicate == null ? await _dbSet.CountAsync() : await _dbSet.CountAsync(predicate);
 
     public async Task AddAsync(T entity)
         => await _dbSet.AddAsync(entity);
